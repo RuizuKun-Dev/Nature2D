@@ -2,101 +2,102 @@ local TestEnum = require(script.Parent.TestEnum)
 local Expectation = require(script.Parent.Expectation)
 
 local function newEnvironment(currentNode, extraEnvironment)
-    local env = {}
+	local env = {}
 
-    if extraEnvironment then
-        if type(extraEnvironment) ~= 'table' then
-            error(('Bad argument #2 to newEnvironment. Expected table, got %s'):format(typeof(extraEnvironment)), 2)
-        end
+	if extraEnvironment then
+		if type(extraEnvironment) ~= "table" then
+			error(("Bad argument #2 to newEnvironment. Expected table, got %s"):format(typeof(extraEnvironment)), 2)
+		end
 
-        for key, value in pairs(extraEnvironment)do
-            env[key] = value
-        end
-    end
+		for key, value in pairs(extraEnvironment) do
+			env[key] = value
+		end
+	end
 
-    local function addChild(phrase, callback, nodeType, nodeModifier)
-        local node = currentNode:addChild(phrase, nodeType, nodeModifier)
+	local function addChild(phrase, callback, nodeType, nodeModifier)
+		local node = currentNode:addChild(phrase, nodeType, nodeModifier)
 
-        node.callback = callback
+		node.callback = callback
 
-        if nodeType == TestEnum.NodeType.Describe then
-            node:expand()
-        end
+		if nodeType == TestEnum.NodeType.Describe then
+			node:expand()
+		end
 
-        return node
-    end
+		return node
+	end
 
-    function env.describeFOCUS(phrase, callback)
-        addChild(phrase, callback, TestEnum.NodeType.Describe, TestEnum.NodeModifier.Focus)
-    end
-    function env.describeSKIP(phrase, callback)
-        addChild(phrase, callback, TestEnum.NodeType.Describe, TestEnum.NodeModifier.Skip)
-    end
-    function env.describe(phrase, callback, nodeModifier)
-        addChild(phrase, callback, TestEnum.NodeType.Describe, TestEnum.NodeModifier.None)
-    end
-    function env.itFOCUS(phrase, callback)
-        addChild(phrase, callback, TestEnum.NodeType.It, TestEnum.NodeModifier.Focus)
-    end
-    function env.itSKIP(phrase, callback)
-        addChild(phrase, callback, TestEnum.NodeType.It, TestEnum.NodeModifier.Skip)
-    end
-    function env.itFIXME(phrase, callback)
-        local node = addChild(phrase, callback, TestEnum.NodeType.It, TestEnum.NodeModifier.Skip)
+	function env.describeFOCUS(phrase, callback)
+		addChild(phrase, callback, TestEnum.NodeType.Describe, TestEnum.NodeModifier.Focus)
+	end
+	function env.describeSKIP(phrase, callback)
+		addChild(phrase, callback, TestEnum.NodeType.Describe, TestEnum.NodeModifier.Skip)
+	end
+	function env.describe(phrase, callback, nodeModifier)
+		addChild(phrase, callback, TestEnum.NodeType.Describe, TestEnum.NodeModifier.None)
+	end
+	function env.itFOCUS(phrase, callback)
+		addChild(phrase, callback, TestEnum.NodeType.It, TestEnum.NodeModifier.Focus)
+	end
+	function env.itSKIP(phrase, callback)
+		addChild(phrase, callback, TestEnum.NodeType.It, TestEnum.NodeModifier.Skip)
+	end
+	function env.itFIXME(phrase, callback)
+		local node = addChild(phrase, callback, TestEnum.NodeType.It, TestEnum.NodeModifier.Skip)
 
-        warn('FIXME: broken test', node:getFullName())
-    end
-    function env.it(phrase, callback, nodeModifier)
-        addChild(phrase, callback, TestEnum.NodeType.It, TestEnum.NodeModifier.None)
-    end
+		warn("FIXME: broken test", node:getFullName())
+	end
+	function env.it(phrase, callback, nodeModifier)
+		addChild(phrase, callback, TestEnum.NodeType.It, TestEnum.NodeModifier.None)
+	end
 
-    local lifecyclePhaseId = 0
-    local lifecycleHooks = {
-        [TestEnum.NodeType.BeforeAll] = 'beforeAll',
-        [TestEnum.NodeType.AfterAll] = 'afterAll',
-        [TestEnum.NodeType.BeforeEach] = 'beforeEach',
-        [TestEnum.NodeType.AfterEach] = 'afterEach',
-    }
+	local lifecyclePhaseId = 0
+	local lifecycleHooks = {
+		[TestEnum.NodeType.BeforeAll] = "beforeAll",
+		[TestEnum.NodeType.AfterAll] = "afterAll",
+		[TestEnum.NodeType.BeforeEach] = "beforeEach",
+		[TestEnum.NodeType.AfterEach] = "afterEach",
+	}
 
-    for nodeType, name in pairs(lifecycleHooks)do
-        env[name] = function(callback)
-            addChild(name .. '_' .. tostring(lifecyclePhaseId), callback, nodeType, TestEnum.NodeModifier.None)
+	for nodeType, name in pairs(lifecycleHooks) do
+		env[name] = function(callback)
+			addChild(name .. "_" .. tostring(lifecyclePhaseId), callback, nodeType, TestEnum.NodeModifier.None)
 
-            lifecyclePhaseId = lifecyclePhaseId + 1
-        end
-    end
+			lifecyclePhaseId = lifecyclePhaseId + 1
+		end
+	end
 
-    function env.FIXME(optionalMessage)
-        warn('FIXME: broken test', currentNode:getFullName(), optionalMessage or '')
+	function env.FIXME(optionalMessage)
+		warn("FIXME: broken test", currentNode:getFullName(), optionalMessage or "")
 
-        currentNode.modifier = TestEnum.NodeModifier.Skip
-    end
-    function env.FOCUS()
-        currentNode.modifier = TestEnum.NodeModifier.Focus
-    end
-    function env.SKIP()
-        currentNode.modifier = TestEnum.NodeModifier.Skip
-    end
-    function env.HACK_NO_XPCALL()
-        warn(
-[[HACK_NO_XPCALL is deprecated. It is now safe to yield in an xpcall, so this is no longer necessary. It can be safely deleted.]])
-    end
+		currentNode.modifier = TestEnum.NodeModifier.Skip
+	end
+	function env.FOCUS()
+		currentNode.modifier = TestEnum.NodeModifier.Focus
+	end
+	function env.SKIP()
+		currentNode.modifier = TestEnum.NodeModifier.Skip
+	end
+	function env.HACK_NO_XPCALL()
+		warn(
+			[[HACK_NO_XPCALL is deprecated. It is now safe to yield in an xpcall, so this is no longer necessary. It can be safely deleted.]]
+		)
+	end
 
-    env.fit = env.itFOCUS
-    env.xit = env.itSKIP
-    env.fdescribe = env.describeFOCUS
-    env.xdescribe = env.describeSKIP
-    env.expect = setmetatable({
-        extend = function(...)
-            error('Cannot call "expect.extend" from within a "describe" node.')
-        end,
-    }, {
-        __call = function(_self, ...)
-            return Expectation.new(...)
-        end,
-    })
+	env.fit = env.itFOCUS
+	env.xit = env.itSKIP
+	env.fdescribe = env.describeFOCUS
+	env.xdescribe = env.describeSKIP
+	env.expect = setmetatable({
+		extend = function(...)
+			error('Cannot call "expect.extend" from within a "describe" node.')
+		end,
+	}, {
+		__call = function(_self, ...)
+			return Expectation.new(...)
+		end,
+	})
 
-    return env
+	return env
 end
 
 local TestNode = {}
@@ -104,86 +105,86 @@ local TestNode = {}
 TestNode.__index = TestNode
 
 function TestNode.new(plan, phrase, nodeType, nodeModifier)
-    nodeModifier = nodeModifier or TestEnum.NodeModifier.None
+	nodeModifier = nodeModifier or TestEnum.NodeModifier.None
 
-    local node = {
-        plan = plan,
-        phrase = phrase,
-        type = nodeType,
-        modifier = nodeModifier,
-        children = {},
-        callback = nil,
-        parent = nil,
-    }
+	local node = {
+		plan = plan,
+		phrase = phrase,
+		type = nodeType,
+		modifier = nodeModifier,
+		children = {},
+		callback = nil,
+		parent = nil,
+	}
 
-    node.environment = newEnvironment(node, plan.extraEnvironment)
+	node.environment = newEnvironment(node, plan.extraEnvironment)
 
-    return setmetatable(node, TestNode)
+	return setmetatable(node, TestNode)
 end
 
 local function getModifier(name, pattern, modifier)
-    if pattern and (modifier == nil or modifier == TestEnum.NodeModifier.None) then
-        if name:match(pattern) then
-            return TestEnum.NodeModifier.Focus
-        else
-            return TestEnum.NodeModifier.Skip
-        end
-    end
+	if pattern and (modifier == nil or modifier == TestEnum.NodeModifier.None) then
+		if name:match(pattern) then
+			return TestEnum.NodeModifier.Focus
+		else
+			return TestEnum.NodeModifier.Skip
+		end
+	end
 
-    return modifier
+	return modifier
 end
 
 function TestNode:addChild(phrase, nodeType, nodeModifier)
-    if nodeType == TestEnum.NodeType.It then
-        for _, child in pairs(self.children)do
-            if child.phrase == phrase then
-                error('Duplicate it block found: ' .. child:getFullName())
-            end
-        end
-    end
+	if nodeType == TestEnum.NodeType.It then
+		for _, child in pairs(self.children) do
+			if child.phrase == phrase then
+				error("Duplicate it block found: " .. child:getFullName())
+			end
+		end
+	end
 
-    local childName = self:getFullName() .. ' ' .. phrase
+	local childName = self:getFullName() .. " " .. phrase
 
-    nodeModifier = getModifier(childName, self.plan.testNamePattern, nodeModifier)
+	nodeModifier = getModifier(childName, self.plan.testNamePattern, nodeModifier)
 
-    local child = TestNode.new(self.plan, phrase, nodeType, nodeModifier)
+	local child = TestNode.new(self.plan, phrase, nodeType, nodeModifier)
 
-    child.parent = self
+	child.parent = self
 
-    table.insert(self.children, child)
+	table.insert(self.children, child)
 
-    return child
+	return child
 end
 function TestNode:getFullName()
-    if self.parent then
-        local parentPhrase = self.parent:getFullName()
+	if self.parent then
+		local parentPhrase = self.parent:getFullName()
 
-        if parentPhrase then
-            return parentPhrase .. ' ' .. self.phrase
-        end
-    end
+		if parentPhrase then
+			return parentPhrase .. " " .. self.phrase
+		end
+	end
 
-    return self.phrase
+	return self.phrase
 end
 function TestNode:expand()
-    local originalEnv = getfenv(self.callback)
-    local callbackEnv = setmetatable({}, {__index = originalEnv})
+	local originalEnv = getfenv(self.callback)
+	local callbackEnv = setmetatable({}, { __index = originalEnv })
 
-    for key, value in pairs(self.environment)do
-        callbackEnv[key] = value
-    end
+	for key, value in pairs(self.environment) do
+		callbackEnv[key] = value
+	end
 
-    callbackEnv.script = originalEnv.script
+	callbackEnv.script = originalEnv.script
 
-    setfenv(self.callback, callbackEnv)
+	setfenv(self.callback, callbackEnv)
 
-    local success, result = xpcall(self.callback, function(message)
-        return debug.traceback(tostring(message), 2)
-    end)
+	local success, result = xpcall(self.callback, function(message)
+		return debug.traceback(tostring(message), 2)
+	end)
 
-    if not success then
-        self.loadError = result
-    end
+	if not success then
+		self.loadError = result
+	end
 end
 
 local TestPlan = {}
@@ -191,76 +192,76 @@ local TestPlan = {}
 TestPlan.__index = TestPlan
 
 function TestPlan.new(testNamePattern, extraEnvironment)
-    local plan = {
-        children = {},
-        testNamePattern = testNamePattern,
-        extraEnvironment = extraEnvironment,
-    }
+	local plan = {
+		children = {},
+		testNamePattern = testNamePattern,
+		extraEnvironment = extraEnvironment,
+	}
 
-    return setmetatable(plan, TestPlan)
+	return setmetatable(plan, TestPlan)
 end
 function TestPlan:addChild(phrase, nodeType, nodeModifier)
-    nodeModifier = getModifier(phrase, self.testNamePattern, nodeModifier)
+	nodeModifier = getModifier(phrase, self.testNamePattern, nodeModifier)
 
-    local child = TestNode.new(self, phrase, nodeType, nodeModifier)
+	local child = TestNode.new(self, phrase, nodeType, nodeModifier)
 
-    table.insert(self.children, child)
+	table.insert(self.children, child)
 
-    return child
+	return child
 end
 function TestPlan:addRoot(path, method)
-    local curNode = self
+	local curNode = self
 
-    for i=#path, 1, -1 do
-        local nextNode = nil
+	for i = #path, 1, -1 do
+		local nextNode = nil
 
-        for _, child in ipairs(curNode.children)do
-            if child.phrase == path[i] then
-                nextNode = child
+		for _, child in ipairs(curNode.children) do
+			if child.phrase == path[i] then
+				nextNode = child
 
-                break
-            end
-        end
+				break
+			end
+		end
 
-        if nextNode == nil then
-            nextNode = curNode:addChild(path[i], TestEnum.NodeType.Describe)
-        end
+		if nextNode == nil then
+			nextNode = curNode:addChild(path[i], TestEnum.NodeType.Describe)
+		end
 
-        curNode = nextNode
-    end
+		curNode = nextNode
+	end
 
-    curNode.callback = method
+	curNode.callback = method
 
-    curNode:expand()
+	curNode:expand()
 end
 function TestPlan:visitAllNodes(callback, root, level)
-    root = root or self
-    level = level or 0
+	root = root or self
+	level = level or 0
 
-    for _, child in ipairs(root.children)do
-        callback(child, level)
-        self:visitAllNodes(callback, child, level + 1)
-    end
+	for _, child in ipairs(root.children) do
+		callback(child, level)
+		self:visitAllNodes(callback, child, level + 1)
+	end
 end
 function TestPlan:visualize()
-    local buffer = {}
+	local buffer = {}
 
-    self:visitAllNodes(function(node, level)
-        table.insert(buffer, (' '):rep(3 * level) .. node.phrase)
-    end)
+	self:visitAllNodes(function(node, level)
+		table.insert(buffer, (" "):rep(3 * level) .. node.phrase)
+	end)
 
-    return table.concat(buffer, '\n')
+	return table.concat(buffer, "\n")
 end
 function TestPlan:findNodes(callback)
-    local results = {}
+	local results = {}
 
-    self:visitAllNodes(function(node)
-        if callback(node) then
-            table.insert(results, node)
-        end
-    end)
+	self:visitAllNodes(function(node)
+		if callback(node) then
+			table.insert(results, node)
+		end
+	end)
 
-    return results
+	return results
 end
 
 return TestPlan
