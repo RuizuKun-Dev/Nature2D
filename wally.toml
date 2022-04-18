@@ -1,10 +1,10 @@
 [package]
-name = "jaipack17/nature2d"
+name = "ruizukun-dev/nature2d"
 description = "Create versatile physics simulations and mechanics with Guis on Roblox!"
-authors = ["jaipack17"]
-version = "0.7.1"
-license = "MIT"
+version = "0.7.2"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
+
+exclude = ["assets", "docs", "unit-test", "LICENSE"]
 
 [dependencies]
