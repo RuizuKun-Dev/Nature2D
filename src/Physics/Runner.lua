@@ -1,3 +1,5 @@
+-- #selene: allow(unused_variable)
+
 local Types = require(script.Parent.Parent.Types)
 local Quadtree = require(script.Parent.Parent.Utilities.Quadtree)
 

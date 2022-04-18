@@ -1,3 +1,5 @@
+-- #selene: allow(unused_variable)
+
 local RigidBody = require(script.Parent.Physics.RigidBody)
 local Point = require(script.Parent.Physics.Point)
 local Constraint = require(script.Parent.Physics.Constraint)

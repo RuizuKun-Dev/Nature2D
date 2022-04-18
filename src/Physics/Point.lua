@@ -1,3 +1,5 @@
+-- #selene: allow(unused_variable)
+
 local Globals = require(script.Parent.Parent.Constants.Globals)
 local Types = require(script.Parent.Parent.Types)
 local throwTypeError = require(script.Parent.Parent.Debugging.TypeErrors)

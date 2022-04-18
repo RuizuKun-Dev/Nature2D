@@ -1,3 +1,5 @@
+-- #selene: allow(unused_variable)
+
 local Point = require(script.Parent.Point)
 local Constraint = require(script.Parent.Constraint)
 local Globals = require(script.Parent.Parent.Constants.Globals)

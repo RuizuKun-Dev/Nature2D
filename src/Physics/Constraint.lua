@@ -1,3 +1,5 @@
+-- #selene: allow(unused_variable)
+
 local line = require(script.Parent.Parent.Utilities.Line)
 local Globals = require(script.Parent.Parent.Constants.Globals)
 local throwTypeError = require(script.Parent.Parent.Debugging.TypeErrors)
